@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
     "lint": "eslint ."
   },
   "dependencies": {
