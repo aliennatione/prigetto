@@ -1,0 +1,28 @@
+{
+  "name": "prigetto",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@astrojs/svelte": "^9.1.2",
+    "@astrojs/tailwind": "^6.0.2",
+    "@famtree/renderer": "^0.1.5",
+    "@famtree/schema": "^0.1.5",
+    "@famtree/validate": "^0.1.5",
+    "astro": "^7.4.7",
+    "date-fns": "^4.4.0",
+    "dexie": "^4.4.7",
+    "svelte": "^5.57.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "5.6.3",
+    "vis-data": "^8.0.6",
+    "vis-timeline": "^8.5.6",
+    "vite": "^8.3.6"
+  }
+}
