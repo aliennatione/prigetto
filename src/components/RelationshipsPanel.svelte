@@ -18,27 +18,27 @@
   function newUnion() {
     if (!selectedId || !partnerId) return;
     addUnion(doc, [selectedId, partnerId], unionType, 'current');
-    doc = doc;
+    doc = { ...doc, people: [...doc.people], relationships: [...doc.relationships] };
     partnerId = '';
   }
 
   function newChild() {
     if (!childId || !unionIdForChild) return;
     addChild(doc, childId, { unionId: unionIdForChild });
-    doc = doc;
+    doc = { ...doc, people: [...doc.people], relationships: [...doc.relationships] };
     childId = '';
   }
 
   function newEmotional() {
     if (!selectedId || !emotionalTarget) return;
     addEmotional(doc, selectedId, emotionalTarget, emotionalBond);
-    doc = doc;
+    doc = { ...doc, people: [...doc.people], relationships: [...doc.relationships] };
     emotionalTarget = '';
   }
 
   function removeRel(id: string) {
     doc.relationships = doc.relationships.filter((r: any) => r.id !== id);
-    doc = doc;
+    doc = { ...doc, people: [...doc.people], relationships: [...doc.relationships] };
   }
 </script>
 

@@ -23,14 +23,14 @@
     if (!editing || !editing.name.trim()) { alert('Nome richiesto'); return; }
     upsertPerson(doc, editing);
     selectedId = editing.id;
-    doc = doc; // trigger reactivity? doc is prop; mutate in place. Parent may not update. We'll rely on mutation + tick.
+    doc = { ...doc, people: [...doc.people], relationships: [...doc.relationships] };
     cancel();
   }
   function remove(id: string) {
     if (!confirm('Eliminare questa persona e le sue relazioni?')) return;
     removePerson(doc, id);
     if (selectedId === id) selectedId = null;
-    doc = doc;
+    doc = { ...doc, people: [...doc.people], relationships: [...doc.relationships] };
   }
 </script>
 
