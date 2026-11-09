@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MarkmapView from './MarkmapView.svelte';
   import { upsertPerson, removePerson } from '../lib/genogram';
   import type { Person, Genogram } from '@famtree/schema';
 
@@ -6,6 +7,7 @@
 
   let showForm = $state(false);
   let editing: Person | null = $state(null);
+  let showMarkmap = $state(false);
 
   const sexes = ['male', 'female', 'unknown'] as const;
   const newPerson = (): Person => ({
@@ -54,7 +56,13 @@
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" bind:checked={editing.isProband} /> Proband (freccia)
       </label>
-      <input class="w-full border rounded px-2 py-1" placeholder="Note" bind:value={editing.notes} />
+      <input class="w-full border rounded px-2 py-1" placeholder="Note (markdown)" bind:value={editing.notes} />
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" bind:checked={showMarkmap} /> Anteprima note come mappa (markmap)
+      </label>
+      {#if showMarkmap}
+        <MarkmapView markdown={editing.notes || ''} />
+      {/if}
       <div class="flex gap-2">
         <button class="px-2 py-1 bg-indigo-600 text-white rounded text-sm" on:click={save}>Salva</button>
         <button class="px-2 py-1 border rounded text-sm" on:click={cancel}>Annulla</button>

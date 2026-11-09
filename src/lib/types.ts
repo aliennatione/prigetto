@@ -19,6 +19,7 @@ export interface Project {
   updatedAt: string;
   genogram: Genogram;
   timelines: Record<string, TimelineEvent[]>;
+  notes?: string;
 }
 
 export const emptyGenogram = (title = 'Nuovo genogramma'): Genogram => ({

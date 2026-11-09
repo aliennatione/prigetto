@@ -6,9 +6,11 @@
   import RelationshipsPanel from './RelationshipsPanel.svelte';
   import GenogramView from './GenogramView.svelte';
   import TimelinePanel from './TimelinePanel.svelte';
+  import MarkmapView from './MarkmapView.svelte';
 
   let project = $state<any>(null);
   let selectedId = $state<string | null>(null);
+  let showProjectMap = $state(false);
   let saveStatus = $state('idle');
   let saveTimer: any;
 
@@ -141,6 +143,21 @@
       <aside class="col-span-4 border-l bg-white p-3 overflow-auto space-y-4">
         <RelationshipsPanel bind:doc={project.genogram} bind:selectedId />
         <TimelinePanel person={selectedPerson} events={selectedEvents} onUpdate={setEvents} />
+
+        <div class="border-t pt-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold">Note progetto (markdown)</h2>
+            <label class="text-sm flex items-center gap-1">
+              <input type="checkbox" bind:checked={showProjectMap} /> Mappa
+            </label>
+          </div>
+          <textarea class="w-full border rounded px-2 py-1 text-sm min-h-[120px]" bind:value={project.notes} placeholder="# Titolo
+- punto 1
+- punto 2"></textarea>
+          {#if showProjectMap}
+            <MarkmapView markdown={project.notes || ''} />
+          {/if}
+        </div>
       </aside>
     </div>
   </div>
