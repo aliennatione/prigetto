@@ -11,7 +11,9 @@
 </script>
 
 <div class="genogram-wrap">
-  {#if rendered}
+  {#if !doc.people || doc.people.length === 0}
+    <div class="text-sm text-gray-500 p-4">Aggiungi persone per visualizzare il genogramma.</div>
+  {:else if rendered}
     <div class="svg-container" style={`width:${rendered.stats.width}px; max-width:100%;`}>
       {@html rendered.svg}
       <svg class="overlay" width={rendered.stats.width} height={rendered.stats.height} viewBox={`0 0 ${rendered.stats.width} ${rendered.stats.height}`}>
