@@ -1,32 +1,42 @@
 {
   "name": "prigetto",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "lint": "eslint ."
+    "dev": "next dev",
+    "build": "next build",
+    "mcp:build": "esbuild mcp/server.ts --bundle --platform=node --format=esm --outfile=dist/genogram-mcp.mjs --banner:js=\"#!/usr/bin/env node\"",
+    "mcp:serve": "node dist/genogram-mcp.mjs",
+    "test:mcp": "npm run mcp:build --silent && node --test tests/genogram/mcp-stdio.test.mjs",
+    "lint": "eslint",
+    "test:genogram": "node tests/genogram/run-tests.mjs"
   },
   "dependencies": {
-    "@astrojs/svelte": "^9.1.2",
-    "@astrojs/tailwind": "^6.0.2",
-    "@famtree/renderer": "^0.1.5",
-    "@famtree/schema": "^0.1.5",
-    "@famtree/validate": "^0.1.5",
-    "@markmap/toolbar": "^1.0.0",
-    "@markmap/view": "^1.0.0",
-    "astro": "^7.4.7",
-    "date-fns": "^4.4.0",
-    "dexie": "^4.4.7",
-    "markmap-common": "^0.18.9",
-    "markmap-lib": "^0.18.13",
-    "svelte": "^5.57.3",
-    "tailwindcss": "^3.4.17",
-    "typescript": "5.6.3",
-    "vis-data": "^8.0.6",
-    "vis-timeline": "^8.5.6",
-    "vite": "^8.3.6"
+    "@dagrejs/dagre": "^3.1.1",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@xyflow/react": "^12.11.3",
+    "html-to-image": "^1.11.13",
+    "idb": "^8.0.3",
+    "lucide-react": "^1.32.0",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "esbuild": "^0.25.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "fake-indexeddb": "^6.2.5",
+    "typescript": "^5"
   }
 }
