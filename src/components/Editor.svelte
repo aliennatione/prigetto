@@ -17,8 +17,11 @@
   // sync from store
   $effect(() => {
     const unsub = currentProject.subscribe((p) => {
+      const prevId = project?.id;
       project = p;
-      if (p && !selectedId && p.genogram.people.length) selectedId = p.genogram.people[0].id;
+      if (p && p.id !== prevId) {
+        selectedId = p.genogram.people.length ? p.genogram.people[0].id : null;
+      }
     });
     return unsub;
   });
