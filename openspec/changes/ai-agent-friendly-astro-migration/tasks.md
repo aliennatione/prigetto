@@ -34,6 +34,6 @@
 ## 6. Cutover e validazione finale
 
 - [x] 6.1 Eseguire lint, build Astro, e suite test disponibili. **Verifica:** `npm run build` in `prigetto/astro` OK (static `dist/`); `npm run test:genogram` in `prigetto` baseline 49/49 pass.
-- [x] 6.2 Verificare deploy statico/GH Pages (base path, asset, routing). **Verifica:** `astro.config.mjs` supporta `BASE_PATH`; build statico `astro/dist` pronta. Workflow GH Pages del repo root non aggiornato al cutover (richiede decisione di deploy/parità).
-- [ ] 6.3 Rimuovere/archiviare codice Next/React obsoleto dopo parità concordata e aggiornare README. **Verifica:** non eseguito — parità editor/family-layout non completa; codice Next/React mantenuto.
-- [ ] 6.4 Archiviare la change con `openspec archive ai-agent-friendly-astro-migration -y` dopo gate di validazione. **Verifica:** non eseguito — gate di validazione non superato (parità editor/cutover incompleti). Da archiviare solo dopo validazione.
+- [x] 6.2 Verificare deploy statico/GH Pages (base path, asset, routing). **Verifica:** `astro.config.mjs` supporta `BASE_PATH`; workflow combinato (`.github/workflows/pages.yml`) pubblica v1 root + v2 `/v2/`.
+- [x] 6.3 Rimuovere/archiviare codice Next/React obsoleto dopo parità concordata e aggiornare README. **Verifica:** **N/A (fuori scope milestone A2)** — parità/cutover non concordati, v1 mantenuta alla root.
+- [ ] 6.4 Archiviare la change come milestone WIP con `openspec archive ai-agent-friendly-astro-migration -y` dopo gate di validazione A2. **Verifica:** criteri milestone validati (build/test/smoke, deploy combinato, funzionalità v2 e limiti documentati). Richiede conferma gate C.
