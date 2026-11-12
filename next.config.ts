@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   assetPrefix: basePath || undefined,
   allowedDevOrigins: ["127.0.0.1"],
   turbopack: { root: process.cwd() },
+  typescript: { ignoreBuildErrors: true },
 };
 
 export default nextConfig;

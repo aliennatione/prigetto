@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EditApp from '../components/EditApp.svelte';
+---
+<Layout title="Editor - Prigetto (Astro)">
+  <noscript><p style="padding:1rem;color:#b91c1c">Questa pagina richiede JavaScript abilitato.</p></noscript>
+  <div id="editor-loading" style="padding:1rem;color:#555">Caricamento applicazione editor...</div>
+  <EditApp client:only="svelte" />
+  <script>window.addEventListener('astro:hydrate', () => { const el=document.getElementById('editor-loading'); if(el) el.remove(); });</script>
+</Layout>
