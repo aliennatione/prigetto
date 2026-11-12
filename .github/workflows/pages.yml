@@ -27,18 +27,35 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install
+      - name: Install (React/Next)
         run: npm ci
 
-      - name: Build
+      - name: Build React (root site, unchanged)
         env:
           BASE_PATH: /prigetto
         run: npm run build
 
+      - name: Install Astro
+        working-directory: astro
+        run: npm ci || npm install
+
+      - name: Build Astro (subpath /v2)
+        working-directory: astro
+        env:
+          BASE_PATH: /prigetto/v2
+        run: npm run build
+
+      - name: Assemble combined site (React root + Astro /v2)
+        run: |
+          mkdir -p _site
+          cp -r out/. _site/
+          mkdir -p _site/v2
+          cp -r astro/dist/. _site/v2/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: ./_site
 
   deploy:
     environment:
