@@ -1,5 +1,11 @@
 # Workflow v1 (React) / v2 (Astro)
 
+## TL;DR
+- **v1 (React, stabile)** → lavora su `main` (o branch da `main`), verifica, PR/merge su `main`.
+- **v2 (Astro, migrazione)** → lavora su `feat/astro-migration` (`astro/`).
+- **Sync auto:** push su `main` → merge automatico in `feat/astro-migration`; se conflitto, PR `main` → `feat/astro-migration`.
+- **Deploy Pages:** root = v1 (`/prigetto/`), sottopath = v2 (`/prigetto/v2/`). Non rompere la root v1.
+
 ## Obiettivo
 - **v1**: applicazione React/Next attuale (stabile, deployata alla root del sito).
 - **v2**: migrazione Astro + Svelte islands (sperimentale), deployata in sottopath `/v2/`.
