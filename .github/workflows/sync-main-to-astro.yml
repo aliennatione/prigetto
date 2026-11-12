@@ -1,0 +1,63 @@
+name: Sync main into astro migration
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/astro-migration
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Try merge main into feat/astro-migration
+        id: merge
+        run: |
+          set +e
+          git merge origin/main --no-edit
+          status=$?
+          set -e
+          if [ $status -eq 0 ]; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            git merge --abort || true
+          fi
+
+      - name: Push merged branch
+        if: steps.merge.outputs.merged == 'true'
+        run: git push origin HEAD:feat/astro-migration
+
+      - name: Create PR to resolve conflicts
+        if: steps.merge.outputs.merged == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh pr list --head main --base feat/astro-migration --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+            echo "Open PR already exists: #$existing"
+            gh pr comment "$existing" --body "Automatic sync: merge of \`main\` into \`feat/astro-migration\` still has conflicts and needs manual resolution."
+          else
+            gh pr create \
+              --head main \
+              --base feat/astro-migration \
+              --title "Sync: merge main into feat/astro-migration" \
+              --body "Automatic merge of \`main\` into \`feat/astro-migration\` failed due to conflicts. Please resolve conflicts in this PR to keep the combined deploy (v1 root + v2) up to date."
+          fi
