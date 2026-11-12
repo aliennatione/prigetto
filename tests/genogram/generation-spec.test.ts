@@ -19,7 +19,7 @@ test('an AI-friendly family spec becomes a validated and laid-out project', () =
   }, { now: fixedNow });
 
   assert.equal(warnings.length, 0);
-  assert.equal(project.schemaVersion, 3);
+  assert.equal(project.schemaVersion, 4);
   assert.equal(project.people.length, 3);
   assert.equal(project.relationships.length, 3);
   assert.equal(project.annotations.length, 1);

@@ -42,9 +42,9 @@ test('the MCP server lists and executes genogram tools over the protocol', async
     const output = generation.structuredContent as Record<string, unknown>;
     assert.equal(output.peopleCount, 3);
     assert.equal(output.relationshipCount, 3);
-    assert.match(String(output.fileName), /MCP-family-v3\.json$/);
+    assert.match(String(output.fileName), /MCP-family-v4.json$/);
     const project = output.project as Record<string, unknown>;
-    assert.equal(project.schemaVersion, 3);
+    assert.equal(project.schemaVersion, 4);
 
     const validation = await client.callTool({
       name: 'validate_genogram',
@@ -54,7 +54,7 @@ test('the MCP server lists and executes genogram tools over the protocol', async
 
     const notation = await client.callTool({ name: 'get_genogram_notation', arguments: {} });
     const notationOutput = notation.structuredContent as Record<string, unknown>;
-    assert.equal(notationOutput.schemaVersion, 3);
+    assert.equal(notationOutput.schemaVersion, 4);
     assert.ok((notationOutput.relationships as unknown[]).length > 40);
   } finally {
     await client.close();

@@ -32,7 +32,7 @@ test('invalid JSON and unsupported schemas are rejected', () => {
   assert.throws(() => parseProjectFile('{not-json'), (error: unknown) => (
     error instanceof ProjectFileError && error.message === 'Project file is not valid JSON.'
   ));
-  assert.throws(() => parseProjectFile(JSON.stringify({ ...project, schemaVersion: 2 })), /schemaVersion must be 3/);
+  assert.throws(() => parseProjectFile(JSON.stringify({ ...project, schemaVersion: 2 })), /schemaVersion must be 4/);
 });
 
 test('project files over the size limit are rejected', () => {
@@ -44,5 +44,5 @@ test('project files over the size limit are rejected', () => {
 test('download names include the schema version and exclude unsafe filename characters', () => {
   const project = createEmptyProject('../Family: Notes?*');
 
-  assert.equal(getProjectFileName(project), 'Family-Notes-v3.json');
+  assert.equal(getProjectFileName(project), 'Family-Notes-v4.json');
 });

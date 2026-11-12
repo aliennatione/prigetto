@@ -35,7 +35,7 @@ test('an invalid replacement leaves the current project unchanged', () => {
   const before = structuredClone(store.project);
   const invalidProject = { ...before, schemaVersion: 2 } as unknown as Project;
 
-  assert.throws(() => store.replaceProject(invalidProject), /schemaVersion must be 3/);
+  assert.throws(() => store.replaceProject(invalidProject), /schemaVersion must be 4/);
   assert.deepEqual(useGenogramStore.getState().project, before);
 });
 

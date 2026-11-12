@@ -71,7 +71,7 @@ test('a large PNG export is scaled down below browser-safe dimension and pixel l
 test('PNG downloads reuse the safe versioned project filename', () => {
   const project = createEmptyProject('../Family: Notes?*');
 
-  assert.equal(getPngExportFileName(project), 'Family-Notes-v3.png');
+  assert.equal(getPngExportFileName(project), 'Family-Notes-v4.png');
 });
 
 test('export bounds include saved emotional-line control points outside node rectangles', () => {
