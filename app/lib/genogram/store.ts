@@ -93,6 +93,11 @@ export interface GenogramStore {
     attributes?: Relationship['attributes'],
   ) => string | null;
   updateRelationship: (id: string, patch: Partial<Pick<Relationship, 'type' | 'attributes'>>) => void;
+  addPlace: (name: string, type?: Place['type']) => string;
+  addEvent: (event: Event) => string;
+  updateEvent: (id: string, patch: Partial<Event>) => void;
+  deleteEvent: (id: string) => void;
+  addEventRelation: (sourceEventId: string, targetEventId: string, type: EventRelation['type']) => string | null;
   deleteRelationships: (ids: string[]) => void;
   addTwinSibling: (childRelationshipId: string, type: Extract<RelationshipType, 'fraternal-twins' | 'identical-twins'>) => string[];
   moveChildToFamily: (childId: string, parentIds: [string, string], options?: MoveChildToFamilyOptions) => string[];
@@ -617,6 +622,40 @@ export const useGenogramStore = create<GenogramStore>((set) => ({
     return createdId;
   },
 
+  addPlace: (name, type = 'other') => {
+    let createdId: string | null = null;
+    set((state) => {
+      const id = createId('place');
+      createdId = id;
+      return commit(state, (project) => { project.places.push({ id, name, type }); }, {});
+    });
+    return createdId as unknown as string;
+  },
+
+  addEvent: (event) => {
+    const id = event?.id || createId('event');
+    set((state) => commit(state, (project) => {
+      project.events.push({ id, linkedEntities: [], datePrecision: 'approx', kind: 'custom', startDate: '', title: '', source: 'manual', ...event });
+    }, {}));
+    return id;
+  },
+
+  updateEvent: (id, patch) => { set((state) => commit(state, (project) => { const idx = project.events.findIndex((e) => e.id === id); if (idx >= 0) project.events[idx] = { ...project.events[idx], ...patch, id }; }, {})); },
+  deleteEvent: (id) => { set((state) => commit(state, (project) => { project.events = project.events.filter((e) => e.id !== id); project.eventRelations = project.eventRelations.filter((r) => r.sourceEventId !== id && r.targetEventId !== id); }, {})); },
+
+  addEventRelation: (sourceEventId, targetEventId, type) => {
+    let createdId: string | null = null;
+    set((state) => {
+      if (sourceEventId === targetEventId) return state;
+      const id = createId('event-relation');
+      createdId = id;
+      return commit(state, (project) => {
+        project.eventRelations.push({ id, sourceEventId, targetEventId, type });
+      }, {});
+    });
+    return createdId;
+  },
+
   updateRelationship: (id, patch) => {
     set((state) => {
       const relationship = state.project.relationships.find((item) => item.id === id);
@@ -957,3 +996,10 @@ export const useGenogramStore = create<GenogramStore>((set) => ({
     };
   }),
 }));
+
+export function selectTimelineForPerson(project: Project, personId: string) {
+  return project.events
+    .filter((event) => event.linkedEntities.some((link) => link.entityType === 'person' && link.entityId === personId))
+    .slice()
+    .sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
+}

@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { Coins, GraduationCap, MapPin, type LucideIcon } from 'lucide-react';
+import { Coins, GraduationCap, MapPin, type any } from 'lucide-react';
 
 import {
   createDefaultCanvasViewVisibility,
@@ -177,7 +177,7 @@ export function ReligionIcon({ religion, size = 18, x, y, color = 'currentColor'
   return <svg x={x} y={y} width={size} height={size} viewBox="0 0 24 24" color={color} aria-hidden="true">{mark}</svg>;
 }
 
-function ProfileBadge({ x, y, label, Icon }: { x: number; y: number; label: string; Icon: LucideIcon }) {
+function ProfileBadge({ x, y, label, Icon }: { x: number; y: number; label: string; Icon: React.ElementType }) {
   return (
     <g aria-label={label} data-profile-badge={label}>
       <circle cx={x} cy={y} r="10.5" fill={PAPER} stroke="#d7e3df" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />

@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 3 as const;
+export const CURRENT_SCHEMA_VERSION = 4 as const;
 
 export const GENDERS = [
   'male', 'female', 'trans-male', 'trans-female',
@@ -355,6 +355,28 @@ export interface TimelineEvent {
   description?: string;
 }
 
+export type PlaceType = 'city' | 'house' | 'hospital' | 'school' | 'work' | 'institution' | 'other';
+export interface Place { id: string; name: string; type: PlaceType; notes?: string; }
+
+export type EventKind = 'birth' | 'death' | 'marriage' | 'separation' | 'divorce' | 'relocation' | 'illness' | 'therapy' | 'trauma' | 'loss' | 'achievement' | 'reunion' | 'conflict' | 'custom';
+export type DatePrecision = 'exact' | 'month' | 'year' | 'decade' | 'approx' | 'range' | 'unknown';
+export type EventEntityType = 'person' | 'place';
+export interface EventEntityLink { entityType: EventEntityType; entityId: string; role?: string; }
+export interface TimelineEventV2 {
+  id: string;
+  title: string;
+  kind: EventKind;
+  startDate: string;
+  endDate?: string;
+  datePrecision: DatePrecision;
+  description?: string;
+  linkedEntities: EventEntityLink[];
+  importance?: 1 | 2 | 3 | 4 | 5;
+  source?: 'manual' | 'ai' | 'import' | 'derived';
+}
+export type EventRelationType = 'caused_by' | 'part_of' | 'follows' | 'precedes' | 'conflicts_with' | 'related_to' | 'same_as';
+export interface EventRelation { id: string; sourceEventId: string; targetEventId: string; type: EventRelationType; note?: string; }
+
 export interface Person {
   id: string;
   name: string;
@@ -431,6 +453,9 @@ export interface Project {
   updatedAt: string;
   people: Person[];
   relationships: Relationship[];
+  places: Place[];
+  events: TimelineEventV2[];
+  eventRelations: EventRelation[];
   households: Household[];
   annotations: CanvasAnnotation[];
   canvas: Canvas;
@@ -461,6 +486,9 @@ export function createEmptyProject(name = 'Untitled Genogram'): Project {
     updatedAt: now,
     people: [],
     relationships: [],
+    places: [],
+    events: [],
+    eventRelations: [],
     households: [],
     annotations: [],
     canvas: { positions: {}, viewport: { x: 0, y: 0, zoom: 1 } },
@@ -593,17 +621,56 @@ function isJsonValue(value: unknown): value is JsonValue {
   return isRecord(value) && Object.values(value).every(isJsonValue);
 }
 
+export function migrateProjectToV4(value: unknown): unknown {
+  if (!isRecord(value)) return value;
+  const version = value.schemaVersion;
+  if (version !== 3 && version !== CURRENT_SCHEMA_VERSION) return value;
+  const migrated: Record<string, unknown> = { ...value, schemaVersion: CURRENT_SCHEMA_VERSION };
+  if (!Array.isArray(migrated.places)) migrated.places = [];
+  if (!Array.isArray(migrated.events)) migrated.events = [];
+  if (!Array.isArray(migrated.eventRelations)) migrated.eventRelations = [];
+  if (Array.isArray(migrated.people)) {
+    const events = migrated.events as unknown[];
+    const eventIds = new Set(events.filter(isRecord).map((e) => String(e.id)));
+    migrated.people = (migrated.people as unknown[]).map((person) => {
+      if (!isRecord(person)) return person;
+      const legacyEvents = Array.isArray(person.timelineEvents) ? person.timelineEvents : [];
+      const { timelineEvents: _removed, ...rest } = person;
+      for (const legacy of legacyEvents) {
+        if (!isRecord(legacy) || typeof legacy.id !== 'string' || typeof legacy.title !== 'string' || typeof legacy.date !== 'string') continue;
+        if (eventIds.has(legacy.id)) continue;
+        eventIds.add(legacy.id);
+        events.push({
+          id: legacy.id,
+          title: legacy.title,
+          kind: 'custom',
+          startDate: legacy.date,
+          datePrecision: 'approx',
+          description: typeof legacy.description === 'string' ? legacy.description : undefined,
+          linkedEntities: [{ entityType: 'person', entityId: String(person.id) }],
+          source: 'import',
+        });
+      }
+      return rest;
+    });
+  }
+  return migrated;
+}
+
 export function validateProject(value: unknown): Project {
   if (!isRecord(value)) throw new ProjectValidationError('project must be an object');
-  if (value.schemaVersion !== CURRENT_SCHEMA_VERSION) throw new ProjectValidationError(`schemaVersion must be ${CURRENT_SCHEMA_VERSION}`);
+  const input = value.schemaVersion === 3 ? migrateProjectToV4(value) : value;
+  if (!isRecord(input)) throw new ProjectValidationError('project must be an object');
+  if (input.schemaVersion !== CURRENT_SCHEMA_VERSION) throw new ProjectValidationError(`schemaVersion must be ${CURRENT_SCHEMA_VERSION}`);
+  value = input;
   for (const field of ['id', 'name', 'createdAt', 'updatedAt']) {
-    if (typeof value[field] !== 'string' || value[field].length === 0) throw new ProjectValidationError(`${field} must be a non-empty string`);
+    if (typeof input[field] !== 'string' || input[field].length === 0) throw new ProjectValidationError(`${field} must be a non-empty string`);
   }
-  if (!Array.isArray(value.people) || !Array.isArray(value.relationships) || !Array.isArray(value.households)) throw new ProjectValidationError('people, relationships and households must be arrays');
-  const annotations = value.annotations ?? [];
+  if (!Array.isArray(input.people) || !Array.isArray(input.relationships) || !Array.isArray(input.households) || !Array.isArray(input.places) || !Array.isArray(input.events) || !Array.isArray(input.eventRelations)) throw new ProjectValidationError('people, relationships, households, places, events and eventRelations must be arrays');
+  const annotations = input.annotations ?? [];
   if (!Array.isArray(annotations)) throw new ProjectValidationError('annotations must be an array');
   const personIds = new Set<string>();
-  (value.people as unknown[]).forEach((entry, index) => {
+  (input.people as unknown[]).forEach((entry, index) => {
     if (!isRecord(entry) || typeof entry.id !== 'string' || personIds.has(entry.id)) throw new ProjectValidationError(`people[${index}] has an invalid or duplicate id`);
     personIds.add(entry.id);
     if (typeof entry.name !== 'string' || !GENDERS.includes(entry.gender as Gender) || !SYMBOL_KINDS.includes(entry.symbolKind as SymbolKind)) throw new ProjectValidationError(`people[${index}] has invalid core fields`);
@@ -648,14 +715,50 @@ export function validateProject(value: unknown): Project {
     }
   });
   const relationshipIds = new Set<string>();
-  (value.relationships as unknown[]).forEach((entry, index) => {
+  (input.relationships as unknown[]).forEach((entry, index) => {
     if (!isRecord(entry) || typeof entry.id !== 'string' || relationshipIds.has(entry.id)) throw new ProjectValidationError(`relationships[${index}] has an invalid or duplicate id`);
     relationshipIds.add(entry.id);
     if (!RELATIONSHIP_TYPES.includes(entry.type as RelationshipType) || typeof entry.source !== 'string' || typeof entry.target !== 'string' || entry.source === entry.target) throw new ProjectValidationError(`relationships[${index}] has invalid endpoints or type`);
     if (!personIds.has(entry.source) || !personIds.has(entry.target)) throw new ProjectValidationError(`relationships[${index}] references an unknown person`);
     if (!isRecord(entry.attributes) || !isJsonValue(entry.attributes)) throw new ProjectValidationError(`relationships[${index}].attributes must be JSON data`);
   });
-  (value.households as unknown[]).forEach((entry, index) => {
+  const placeIds = new Set<string>();
+  (input.places as unknown[]).forEach((entry, index) => {
+    if (!isRecord(entry) || typeof entry.id !== 'string' || placeIds.has(entry.id)) throw new ProjectValidationError('places[' + index + '] has an invalid or duplicate id');
+    placeIds.add(entry.id);
+    if (typeof entry.name !== 'string') throw new ProjectValidationError('places[' + index + '].name must be a string');
+    if (!['city','house','hospital','school','work','institution','other'].includes(String(entry.type))) throw new ProjectValidationError('places[' + index + '].type is invalid');
+    if (entry.notes !== undefined && typeof entry.notes !== 'string') throw new ProjectValidationError('places[' + index + '].notes must be a string');
+  });
+  const eventIds = new Set<string>();
+  (input.events as unknown[]).forEach((entry, index) => {
+    if (!isRecord(entry) || typeof entry.id !== 'string' || eventIds.has(entry.id)) throw new ProjectValidationError('events[' + index + '] has an invalid or duplicate id');
+    eventIds.add(entry.id);
+    if (typeof entry.title !== 'string') throw new ProjectValidationError('events[' + index + '].title must be a string');
+    if (!['birth','death','marriage','separation','divorce','relocation','illness','therapy','trauma','loss','achievement','reunion','conflict','custom'].includes(String(entry.kind))) throw new ProjectValidationError('events[' + index + '].kind is invalid');
+    if (typeof entry.startDate !== 'string') throw new ProjectValidationError('events[' + index + '].startDate must be a string');
+    if (entry.endDate !== undefined && typeof entry.endDate !== 'string') throw new ProjectValidationError('events[' + index + '].endDate must be a string');
+    if (!['exact','month','year','decade','approx','range','unknown'].includes(String(entry.datePrecision))) throw new ProjectValidationError('events[' + index + '].datePrecision is invalid');
+    if (entry.description !== undefined && typeof entry.description !== 'string') throw new ProjectValidationError('events[' + index + '].description must be a string');
+    if (!Array.isArray(entry.linkedEntities)) throw new ProjectValidationError('events[' + index + '].linkedEntities must be an array');
+    (entry.linkedEntities as unknown[]).forEach((link, li) => {
+      if (!isRecord(link) || !['person','place'].includes(String(link.entityType)) || typeof link.entityId !== 'string') throw new ProjectValidationError('events[' + index + '].linkedEntities[' + li + '] is invalid');
+      if (link.role !== undefined && typeof link.role !== 'string') throw new ProjectValidationError('events[' + index + '].linkedEntities[' + li + '].role must be a string');
+      if (link.entityType === 'person' && !personIds.has(link.entityId)) throw new ProjectValidationError('events[' + index + '].linkedEntities[' + li + '] references unknown person');
+      if (link.entityType === 'place' && !placeIds.has(link.entityId)) throw new ProjectValidationError('events[' + index + '].linkedEntities[' + li + '] references unknown place');
+    });
+    if (entry.importance !== undefined && ![1,2,3,4,5].includes(Number(entry.importance))) throw new ProjectValidationError('events[' + index + '].importance is invalid');
+    if (entry.source !== undefined && !['manual','ai','import','derived'].includes(String(entry.source))) throw new ProjectValidationError('events[' + index + '].source is invalid');
+  });
+  (input.eventRelations as unknown[]).forEach((entry, index) => {
+    if (!isRecord(entry) || typeof entry.id !== 'string') throw new ProjectValidationError('eventRelations[' + index + '] is invalid');
+    if (typeof entry.sourceEventId !== 'string' || !eventIds.has(entry.sourceEventId)) throw new ProjectValidationError('eventRelations[' + index + '].sourceEventId references unknown event');
+    if (typeof entry.targetEventId !== 'string' || !eventIds.has(entry.targetEventId)) throw new ProjectValidationError('eventRelations[' + index + '].targetEventId references unknown event');
+    if (entry.sourceEventId === entry.targetEventId) throw new ProjectValidationError('eventRelations[' + index + '] cannot be self-referential');
+    if (!['caused_by','part_of','follows','precedes','conflicts_with','related_to','same_as'].includes(String(entry.type))) throw new ProjectValidationError('eventRelations[' + index + '].type is invalid');
+    if (entry.note !== undefined && typeof entry.note !== 'string') throw new ProjectValidationError('eventRelations[' + index + '].note must be a string');
+  });
+  (input.households as unknown[]).forEach((entry, index) => {
     if (!isRecord(entry) || typeof entry.id !== 'string' || typeof entry.label !== 'string' || !Array.isArray(entry.memberIds)) throw new ProjectValidationError(`households[${index}] is invalid`);
     if ((entry.memberIds as unknown[]).some((id) => typeof id !== 'string' || !personIds.has(id))) throw new ProjectValidationError(`households[${index}] references an unknown person`);
   });
@@ -691,23 +794,23 @@ export function validateProject(value: unknown): Project {
     if (!isRecord(entry) || !Array.isArray(entry.linkedIds)) return;
     if (entry.linkedIds.some((id) => !annotationLinkTargets.has(String(id)))) throw new ProjectValidationError(`annotations[${index}].linkedIds references an unknown item`);
   });
-  if (!isRecord(value.canvas) || !isRecord(value.canvas.positions) || !isRecord(value.canvas.viewport)) throw new ProjectValidationError('canvas is invalid');
-  if (value.canvas.personLabelVisibility !== undefined) {
-    if (!isRecord(value.canvas.personLabelVisibility)) throw new ProjectValidationError('canvas.personLabelVisibility must be an object');
-    for (const [key, visible] of Object.entries(value.canvas.personLabelVisibility)) {
+  if (!isRecord(input.canvas) || !isRecord(input.canvas.positions) || !isRecord(input.canvas.viewport)) throw new ProjectValidationError('canvas is invalid');
+  if (input.canvas.personLabelVisibility !== undefined) {
+    if (!isRecord(input.canvas.personLabelVisibility)) throw new ProjectValidationError('canvas.personLabelVisibility must be an object');
+    for (const [key, visible] of Object.entries(input.canvas.personLabelVisibility)) {
       if (!PERSON_LABEL_KEYS.includes(key as PersonLabelKey) || typeof visible !== 'boolean') throw new ProjectValidationError(`canvas.personLabelVisibility.${key} is invalid`);
     }
   }
-  if (value.canvas.wrapPersonLabels !== undefined && typeof value.canvas.wrapPersonLabels !== 'boolean') throw new ProjectValidationError('canvas.wrapPersonLabels must be a boolean');
-  if (value.canvas.viewVisibility !== undefined) {
-    if (!isRecord(value.canvas.viewVisibility)) throw new ProjectValidationError('canvas.viewVisibility must be an object');
-    for (const [key, visible] of Object.entries(value.canvas.viewVisibility)) {
+  if (input.canvas.wrapPersonLabels !== undefined && typeof input.canvas.wrapPersonLabels !== 'boolean') throw new ProjectValidationError('canvas.wrapPersonLabels must be a boolean');
+  if (input.canvas.viewVisibility !== undefined) {
+    if (!isRecord(input.canvas.viewVisibility)) throw new ProjectValidationError('canvas.viewVisibility must be an object');
+    for (const [key, visible] of Object.entries(input.canvas.viewVisibility)) {
       if (!CANVAS_VIEW_KEYS.includes(key as CanvasViewKey) || typeof visible !== 'boolean') throw new ProjectValidationError(`canvas.viewVisibility.${key} is invalid`);
     }
   }
   for (const id of [...personIds, ...annotationIds]) {
-    const position = value.canvas.positions[id];
+    const position = input.canvas.positions[id];
     if (!isRecord(position) || typeof position.x !== 'number' || typeof position.y !== 'number') throw new ProjectValidationError(`canvas position for ${id} is invalid`);
   }
-  return structuredClone({ ...value, annotations }) as unknown as Project;
+  return structuredClone({ ...input, annotations }) as unknown as Project;
 }

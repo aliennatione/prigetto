@@ -21,7 +21,7 @@ import {
   type Viewport as FlowViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ArrowLeftRight, Baby, Bold, BookOpen, BoxSelect, BriefcaseBusiness, CalendarDays, ChevronDown, Clock, Coins, Copy, Download, Eye, EyeOff, FolderOpen, GitBranch, Globe2, GraduationCap, Group, Hand, Heart, House, ImageDown, Italic, Layers, Link2, MapPin, MessageSquare, Minus, MousePointer2, Palette, Plus, Sparkles, Star, StickyNote, Tags, Trash2, Triangle, Type, Underline, UserRound, UserPlus, Users, type LucideIcon } from 'lucide-react';
+import { ArrowLeftRight, Baby, Bold, BookOpen, BoxSelect, BriefcaseBusiness, CalendarDays, ChevronDown, Clock, Coins, Copy, Download, Eye, EyeOff, FolderOpen, GitBranch, Globe2, GraduationCap, Group, Hand, Heart, House, ImageDown, Italic, Layers, Link2, MapPin, MessageSquare, Minus, MousePointer2, Palette, Plus, Sparkles, Star, StickyNote, Tags, Trash2, Triangle, Type, Underline, UserRound, UserPlus, Users, type any } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -89,6 +89,7 @@ import {
   type PersonFlowNode,
 } from '../lib/genogram/flow-adapter';
 import { useGenogramStore, type QuickRelativeKind } from '../lib/genogram/store';
+import { TimelineWidget } from './TimelineWidget';
 import { COUNTRY_OPTIONS, countryFlag } from '../lib/countries';
 import { GenogramFamilyEdge } from './GenogramFamilyEdge';
 import { GenogramRelationshipEdge } from './GenogramRelationshipEdge';
@@ -172,7 +173,7 @@ const personLabelOptions: Array<{ key: PersonLabelKey; label: string }> = [
   { key: 'notes', label: 'Notes' },
 ];
 
-const canvasViewOptions: Array<{ key: CanvasViewKey; label: string; icon: LucideIcon }> = [
+const canvasViewOptions: Array<{ key: CanvasViewKey; label: string; icon: React.ElementType }> = [
   { key: 'cultural', label: 'Cultural', icon: Globe2 },
   { key: 'medical', label: 'Medical', icon: Heart },
   { key: 'social', label: 'Social', icon: Coins },
@@ -224,7 +225,7 @@ const AnnotationActionContext = createContext<AnnotationActionContextValue | nul
 const personQuickActions: Array<{
   action: PersonQuickAction;
   label: string;
-  Icon: LucideIcon;
+  Icon: React.ElementType;
   position: string;
   tone: string;
 }> = [
@@ -551,7 +552,7 @@ function Legend({ project }: { project: Project }) {
 interface PersonInspectorSectionProps {
   id: string;
   title: string;
-  icon: LucideIcon;
+  icon: React.ElementType;
   tone: string;
   open: boolean;
   onToggle: () => void;
@@ -1983,7 +1984,7 @@ function GenogramCanvas({ mode, initialProject }: Required<Pick<GenogramEditorPr
         )}
       </div>
       {mode === 'preview' && <aside className={styles.previewLegendRail} aria-label="Preview legend area"><Legend project={project} /><p className={styles.previewLegendNote}>Your new canvas starts here. Open it to rename people, add family members, and build the map.</p></aside>}
-      {mode === 'edit' && showInspector && <CanvasViewContext.Provider value={canvasViewContext}><aside className={styles.inspector} aria-label="Edit panel">{selectedAnnotationLink ? <AnnotationLinkInspector sourceId={selectedAnnotationLink.sourceId} targetId={selectedAnnotationLink.targetId} onClose={() => setSelectedAnnotationLink(null)} /> : ui.activePanel === 'person' ? <PersonInspector person={selectedPerson} /> : ui.activePanel === 'household' ? <HouseholdInspector household={selectedHousehold} project={project} /> : selectedRelationship ? <RelationshipInspector relationship={selectedRelationship} /> : null}</aside></CanvasViewContext.Provider>}
+      {mode === 'edit' && showInspector && <CanvasViewContext.Provider value={canvasViewContext}><aside className={styles.inspector} aria-label="Edit panel">{selectedAnnotationLink ? <AnnotationLinkInspector sourceId={selectedAnnotationLink.sourceId} targetId={selectedAnnotationLink.targetId} onClose={() => setSelectedAnnotationLink(null)} /> : ui.activePanel === 'person' ? <><PersonInspector person={selectedPerson} />{selectedPerson ? <TimelineWidget project={project} personId={selectedPerson.id} /> : null}</> : ui.activePanel === 'household' ? <HouseholdInspector household={selectedHousehold} project={project} /> : selectedRelationship ? <RelationshipInspector relationship={selectedRelationship} /> : null}</aside></CanvasViewContext.Provider>}
       {mode === 'edit' && !connectionModeActive && !ui.dragSnapshot && selectedAnnotation && ui.selectedAnnotationIds.length === 1 && annotationEditorPosition && <div className={styles.annotationEditorAnchor} style={annotationEditorPosition}><AnnotationFloatingEditor annotation={selectedAnnotation} /></div>}
       {mode === 'edit' && !relationshipMode && !ui.dragSnapshot && selectedSymbolCount > 1 && <div
         className={`${styles.selectionActionBar} ${selectionActionPosition ? styles.selectionActionBarAnchored : ''}`}
