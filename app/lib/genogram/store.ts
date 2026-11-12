@@ -28,6 +28,9 @@ import {
   type ProjectSnapshot,
   type Relationship,
   type RelationshipType,
+  type TimelineEventV2 as Event,
+  type Place,
+  type EventRelation,
   type Viewport,
   type SymbolKind,
 } from './model';
@@ -635,7 +638,7 @@ export const useGenogramStore = create<GenogramStore>((set) => ({
   addEvent: (event) => {
     const id = event?.id || createId('event');
     set((state) => commit(state, (project) => {
-      project.events.push({ id, linkedEntities: [], datePrecision: 'approx', kind: 'custom', startDate: '', title: '', source: 'manual', ...event });
+      project.events.push({ ...event, id });
     }, {}));
     return id;
   },
