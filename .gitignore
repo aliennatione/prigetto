@@ -59,3 +59,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# pi session files
+pi-session*
+**/pi-session*
